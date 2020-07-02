@@ -1,0 +1,78 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: justify;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <section>
+      <header>
+        <h2 id="content"></h2>
+      </header>
+    </section>
+  </main>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/geolib@3.3.1/lib/index.min.js"></script>
+<script>
+  (function () {
+    const treasureLocation = { latitude: -37.7910841, longitude: 144.9240184 };
+
+    function show(html) {
+      document.getElementById("content").innerHTML = html;
+    }
+
+    if (!navigator.geolocation) {
+      show("<p>Uhoh, your browser doesn't seem to support GPS</p><p>Try using another phone?</p>");
+      return;
+    }
+
+    show("Acquiring GPS lock...");
+
+    navigator.geolocation.watchPosition(function success(pos) {
+      let distance = geolib.getDistance({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }, treasureLocation);
+
+      if (distance === 0) {
+        show(`You've found the next clue!`);
+        return;
+      }
+
+      if (distance > 5000) {
+        distance = `${Math.round(geolib.convertDistance(distance, 'km'))}km`;
+      } else if (distance > 1000) {
+        distance = `${Math.round(geolib.convertDistance(distance, 'km') * 10) / 10}km`;
+      } else {
+        distance = `${distance}m`;
+      }
+
+      show(`You are <span class='distance'>${distance}</span> away from the next clue`);
+
+    }, function error(err) {
+      let errorMessage = `Something very unexpected happened (err: ${err.code}, msg: ${err.message})`;
+
+      switch (err.code) {
+        case err.PERMISSION_DENIED:
+          errorMessage = "Uhoh, we need to be able to use location services for this to work";
+          break;
+        case err.POSITION_UNAVAILABLE:
+          errorMessage = "Hmm.. It looks like we can't get a GPS signal - try moving somewhere else";
+          break;
+      }
+
+
+      show(`<p>${errorMessage}</p><p><a href='javascript:window.location.reload(true)'><strong>Try again</strong></a></p>`);
+
+    }, { enableHighAccuracy: true });
+  })();
+</script>
+
+</html>
